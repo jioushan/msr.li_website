@@ -1,0 +1,24 @@
+<script type="text/javascript">
+var type=navigator.appName  
+if (type=="Netscape"){  
+    var lang = navigator.language  
+}  
+else{  
+    var lang = navigator.userLanguage  
+}  
+//取得国家代码的前两个字母  
+var lang = lang.substr(0,2)  
+// 英语  
+if (lang == "en"){  
+    window.location.href="https://blog.jsmsr.com/"  
+}  
+// 中文 - 不分繁体和简体  
+else if (lang == "zh"){  
+  window.location.href="https://jioushan.top/"  
+//  注释掉了上面跳转,不然会陷入无限循环  
+}  
+// 除上面所列的语言  
+else{  
+    window.location.href="https://www.msr.pub/"  
+}  
+</script>

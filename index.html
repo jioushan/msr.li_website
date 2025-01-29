@@ -23,7 +23,7 @@
     <script>
         require(["vs/editor/editor.main"], function () {
             window.editor = monaco.editor.create(document.getElementById("editor"), {
-                value: "console.log('Hello, Cloudflare Workers!');",
+                value: "{"code": "{\"name\": \"John\", \"age\": 30}"};",
                 language: "javascript",
                 theme: "vs-dark"
             });

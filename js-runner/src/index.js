@@ -1,28 +1,52 @@
 export default {
 	async fetch(request) {
-	  try {
-		const { code } = await request.json();
-		if (!code) return new Response("No code provided", { status: 400 });
+	  const method = request.method;
   
-		// 安全执行代码
-		const result = await runCode(code);
-  
-		return new Response(JSON.stringify({ output: result }), {
-		  headers: { "Content-Type": "application/json" },
-		});
-	  } catch (error) {
-		return new Response(JSON.stringify({ error: error.message }), {
-		  headers: { "Content-Type": "application/json" },
-		  status: 500,
+	  // 如果是 OPTIONS 请求，返回 CORS 头部
+	  if (method === "OPTIONS") {
+		return new Response(null, {
+		  headers: {
+			"Access-Control-Allow-Origin": "*",  // 允许所有来源
+			"Access-Control-Allow-Methods": "POST, GET",  // 允许的方法
+			"Access-Control-Allow-Headers": "Content-Type",  // 允许的请求头
+		  },
 		});
 	  }
+  
+	  // 处理 POST 请求
+	  if (method === "POST") {
+		try {
+		  const { code } = await request.json();
+		  if (!code) return new Response("No code provided", { status: 400 });
+  
+		  // 进行安全检查和处理
+		  const result = await runSafeCode(code);
+  
+		  return new Response(JSON.stringify({ output: result }), {
+			headers: {
+			  "Content-Type": "application/json",
+			  "Access-Control-Allow-Origin": "*",  // 允许所有来源
+			  "Access-Control-Allow-Methods": "POST, GET",  // 允许的方法
+			},
+		  });
+		} catch (error) {
+		  return new Response(JSON.stringify({ error: error.message }), {
+			headers: { "Content-Type": "application/json" },
+			status: 500,
+		  });
+		}
+	  }
+  
+	  return new Response("Method Not Allowed", { status: 405 });
 	},
   };
   
-  async function runCode(code) {
+  // 安全执行用户输入的代码
+  async function runSafeCode(code) {
 	try {
-	  // 在安全环境中执行代码
-	  return new Function(`"use strict"; return (async () => { ${code} })();`)();
+	  // 限制只能运行基本的 JavaScript 操作
+	  // 只允许 JSON 解析
+	  return JSON.parse(code);
 	} catch (error) {
 	  return `Error: ${error.message}`;
 	}

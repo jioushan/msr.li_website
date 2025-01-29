@@ -23,7 +23,7 @@
     <script>
         require(["vs/editor/editor.main"], function () {
             window.editor = monaco.editor.create(document.getElementById("editor"), {
-                value: "{"code": "{\"name\": \"John\", \"age\": 30}"};",
+                value: "const sum = 5 + 10;\nsum;", 
                 language: "javascript",
                 theme: "vs-dark"
             });

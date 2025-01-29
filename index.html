@@ -12,10 +12,12 @@
 <body>
     <div id="editor"></div>
     
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.42.0/min/vs/loader.min.js"></script>
+    <!-- Monaco Editor 官方 CDN -->
     <script>
-      require.config({ paths: { vs: "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.42.0/min/vs" }});
-
+        var require = { paths: { vs: "https://unpkg.com/monaco-editor@latest/min/vs" } };
+    </script>
+    <script src="https://unpkg.com/monaco-editor@latest/min/vs/loader.js"></script>
+    <script>
       require(["vs/editor/editor.main"], function () {
         monaco.editor.create(document.getElementById("editor"), {
           value: "// Welcome to Web IDE\nconsole.log('Hello World');",

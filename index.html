@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Web IDE</title>
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; }
+        #editor { width: 100vw; height: 100vh; }
+    </style>
+</head>
+<body>
+    <div id="editor"></div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.42.0/min/vs/loader.min.js"></script>
+    <script>
+      require.config({ paths: { vs: "https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.42.0/min/vs" }});
+
+      require(["vs/editor/editor.main"], function () {
+        monaco.editor.create(document.getElementById("editor"), {
+          value: "// Welcome to Web IDE\nconsole.log('Hello World');",
+          language: "javascript",
+          theme: "vs-dark"
+        });
+      });
+    </script>
+</body>
+</html>

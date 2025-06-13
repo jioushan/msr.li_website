@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>IPTV Player</title>
@@ -8,16 +8,11 @@
   <link href="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.css" rel="stylesheet">
   <style>
     :root {
-      --bg: #ffffff;
-      --text: #111111;
-      --accent: #007bff;
-    }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #121212;
-        --text: #f0f0f0;
-        --accent: #66b2ff;
-      }
+      --bg: #1a1a2e;
+      --text: #e6e6e6;
+      --accent: #4cc9f0;
+      --secondary: #16213e;
+      --highlight: #f72585;
     }
     body {
       margin: 0;
@@ -29,11 +24,12 @@
       min-height: 100vh;
     }
     header {
-      background: var(--accent);
+      background: linear-gradient(135deg, var(--secondary) 0%, var(--bg) 100%);
       color: #fff;
       padding: 1rem;
       text-align: center;
       font-size: 1.5rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
     }
     main {
       flex: 1;
@@ -56,12 +52,26 @@
       flex-wrap: wrap;
       gap: 0.5rem;
     }
-    select, input[type="file"], input[type="search"] {
+    select, input[type="file"], input[type="search"], button {
       padding: 0.5rem;
-      border: 1px solid #ccc;
+      border: 1px solid #2a2a3a;
       border-radius: 5px;
-      background: var(--bg);
+      background: var(--secondary);
       color: var(--text);
+      transition: all 0.3s ease;
+    }
+    input[type="search"] {
+      flex: 1;
+    }
+    button {
+      cursor: pointer;
+      background: var(--accent);
+      color: #111;
+      font-weight: bold;
+    }
+    button:hover {
+      background: var(--highlight);
+      color: white;
     }
     .channel-list {
       display: flex;
@@ -69,10 +79,10 @@
       gap: 0.5rem;
       overflow-y: auto;
       max-height: 70vh;
-      border: 1px solid #ccc;
+      border: 1px solid #2a2a3a;
       padding: 0.5rem;
       border-radius: 5px;
-      transition: max-width 0.3s ease;
+      background: var(--secondary);
     }
     .channel-item {
       padding: 0.5rem;
@@ -81,17 +91,21 @@
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      background: var(--bg);
+      background: var(--secondary);
       border: 1px solid transparent;
+      transition: all 0.2s ease;
     }
     .channel-item:hover, .channel-item.active {
       background: var(--accent);
-      color: white;
+      color: #111;
       border-color: var(--accent);
+      transform: translateX(5px);
     }
     .channel-item img {
       width: 32px;
       height: 32px;
+      border-radius: 50%;
+      object-fit: cover;
     }
     .video-container {
       flex: 1;
@@ -99,26 +113,47 @@
       flex-direction: column;
       position: relative;
       order: 1;
+      max-width: 800px;
     }
     footer {
       text-align: center;
       font-size: 0.9rem;
       padding: 1rem;
       opacity: 0.6;
+      background: var(--secondary);
     }
     .toggle-list {
       margin-bottom: 0.5rem;
       cursor: pointer;
       color: var(--accent);
       text-align: right;
+      font-weight: bold;
     }
     .player-controls {
       margin-top: 0.5rem;
+      display: flex;
+      gap: 0.5rem;
+    }
+    .error-message {
+      color: #ff6b6b;
+      padding: 1rem;
+      text-align: center;
+    }
+    @media (max-width: 768px) {
+      main {
+        flex-direction: column;
+      }
+      .sidebar {
+        width: 100%;
+      }
+      .video-container {
+        order: 1;
+      }
     }
   </style>
 </head>
 <body>
-  <header>🇯🇵IPTV Player</header>
+  <header>🌐 IPTV Player</header>
   <main>
     <div class="video-container">
       <video id="video" controls playsinline></video>
@@ -126,22 +161,31 @@
     <div class="sidebar">
       <div class="controls">
         <input type="search" id="search" placeholder="Search Channels">
+        <button id="proxy-toggle" title="Toggle CORS Proxy">🔀 Proxy</button>
+      </div>
+      <div class="controls">
         <input type="file" id="upload" accept=".m3u">
+        <button id="load-default">Load Default</button>
       </div>
       <div class="toggle-list" onclick="toggleChannelList()">📺 Show/Hide Channel List</div>
       <div class="channel-list" id="channel-list"></div>
+      <div id="error-message" class="error-message" style="display: none;"></div>
     </div>
   </main>
   <footer>
-    数据来源：<a href="https://github.com/luongz/iptv-jp" target="_blank">luongz/iptv-jp</a>
+    Data source: <a href="https://github.com/luongz/iptv-jp" target="_blank" style="color: var(--accent);">luongz/iptv-jp</a>
   </footer>
   <script src="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.polyfilled.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script>
     const defaultM3U = 'https://raw.githubusercontent.com/luongz/iptv-jp/refs/heads/main/jp.m3u';
+    const corsProxy = 'https://cors-anywhere.herokuapp.com/';
     const listEl = document.getElementById('channel-list');
     const searchEl = document.getElementById('search');
     const uploadEl = document.getElementById('upload');
+    const loadDefaultBtn = document.getElementById('load-default');
+    const proxyToggleBtn = document.getElementById('proxy-toggle');
+    const errorMessageEl = document.getElementById('error-message');
     const videoElement = document.getElementById('video');
 
     const player = new Plyr(videoElement, {
@@ -150,6 +194,7 @@
     });
 
     let allChannels = [], currentIndex = 0, hlsInstance;
+    let useProxy = false;
 
     async function parseM3U(text) {
       const lines = text.split('\n');
@@ -168,6 +213,10 @@
 
     function showChannels(list) {
       listEl.innerHTML = '';
+      if (list.length === 0) {
+        listEl.innerHTML = '<div class="channel-item">No channels found</div>';
+        return;
+      }
       list.forEach((channel, index) => {
         const el = document.createElement('div');
         el.className = 'channel-item';
@@ -177,46 +226,92 @@
       });
     }
 
+    function showError(message) {
+      errorMessageEl.textContent = message;
+      errorMessageEl.style.display = 'block';
+      setTimeout(() => {
+        errorMessageEl.style.display = 'none';
+      }, 5000);
+    }
+
     function playChannel(index) {
       const channel = allChannels[index];
       if (!channel) return;
+      
       currentIndex = index;
       Array.from(listEl.children).forEach((el, i) => {
         el.classList.toggle('active', i === index);
       });
+      
       if (hlsInstance) {
         hlsInstance.destroy();
         hlsInstance = null;
       }
+      
+      let playbackUrl = channel.url;
+      if (useProxy) {
+        playbackUrl = corsProxy + channel.url;
+      }
+
       if (Hls.isSupported()) {
         hlsInstance = new Hls({
           enableWorker: true,
-          backBufferLength: 30
+          backBufferLength: 30,
+          xhrSetup: function(xhr) {
+            if (useProxy) {
+              xhr.withCredentials = false;
+            }
+          }
         });
-        hlsInstance.loadSource(channel.url);
+        
+        hlsInstance.on(Hls.Events.ERROR, (event, data) => {
+          if (data.fatal) {
+            switch(data.type) {
+              case Hls.ErrorTypes.NETWORK_ERROR:
+                showError('Network error - trying with proxy...');
+                useProxy = true;
+                playChannel(currentIndex);
+                break;
+              case Hls.ErrorTypes.MEDIA_ERROR:
+                showError('Media error - trying to recover...');
+                hlsInstance.recoverMediaError();
+                break;
+              default:
+                showError('Unable to play this stream');
+                break;
+            }
+          }
+        });
+        
+        hlsInstance.loadSource(playbackUrl);
         hlsInstance.attachMedia(videoElement);
-        player.source = {
-          type: 'video',
-          sources: [{ src: channel.url, type: 'application/vnd.apple.mpegurl' }]
-        };
       } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
-        videoElement.src = channel.url;
+        videoElement.src = playbackUrl;
       } else {
-        alert('HLS playback is not supported, please change the browser');
+        showError('HLS playback is not supported in your browser');
       }
     }
 
     function updateSearch(keyword) {
-      const filtered = allChannels.filter(c => c.name.toLowerCase().includes(keyword.toLowerCase()));
+      const filtered = allChannels.filter(c => 
+        c.name.toLowerCase().includes(keyword.toLowerCase()) ||
+        (c.group && c.group.toLowerCase().includes(keyword.toLowerCase()))
+      );
       showChannels(filtered);
     }
 
     async function initFromUrl(url) {
-      const res = await fetch(url);
-      const text = await res.text();
-      allChannels = await parseM3U(text);
-      showChannels(allChannels);
-      if (allChannels[0]) playChannel(0);
+      try {
+        const res = await fetch(useProxy ? corsProxy + url : url);
+        if (!res.ok) throw new Error('Failed to fetch playlist');
+        const text = await res.text();
+        allChannels = await parseM3U(text);
+        showChannels(allChannels);
+        if (allChannels[0]) playChannel(0);
+      } catch (error) {
+        showError('Error loading playlist: ' + error.message);
+        console.error(error);
+      }
     }
 
     uploadEl.addEventListener('change', e => {
@@ -228,8 +323,12 @@
           allChannels = channels;
           showChannels(allChannels);
           if (allChannels[0]) playChannel(0);
+        }).catch(error => {
+          showError('Error parsing playlist file');
+          console.error(error);
         });
       };
+      reader.onerror = () => showError('Error reading file');
       reader.readAsText(file);
     });
 
@@ -239,6 +338,20 @@
       listEl.style.display = (listEl.style.display === 'none' || getComputedStyle(listEl).display === 'none') ? 'flex' : 'none';
     }
 
+    proxyToggleBtn.addEventListener('click', () => {
+      useProxy = !useProxy;
+      proxyToggleBtn.style.background = useProxy ? 'var(--highlight)' : 'var(--accent)';
+      proxyToggleBtn.title = useProxy ? 'Disable CORS Proxy' : 'Enable CORS Proxy';
+      if (allChannels.length > 0 && currentIndex >= 0) {
+        playChannel(currentIndex);
+      }
+    });
+
+    loadDefaultBtn.addEventListener('click', () => {
+      initFromUrl(defaultM3U);
+    });
+
+    // Initialize
     initFromUrl(defaultM3U);
   </script>
 </body>

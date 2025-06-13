@@ -12,7 +12,14 @@
       --text: #e6e6e6;
       --accent: #4cc9f0;
       --secondary: #16213e;
-      --highlight: #f72585;
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f0f4f8;
+        --text: #2b2b2b;
+        --accent: #3a86ff;
+        --secondary: #e2e8f0;
+      }
     }
     body {
       margin: 0;
@@ -24,12 +31,12 @@
       min-height: 100vh;
     }
     header {
-      background: linear-gradient(135deg, var(--secondary) 0%, var(--bg) 100%);
-      color: #fff;
+      background: linear-gradient(135deg, var(--secondary) 0%, var(--accent) 100%);
+      color: white;
       padding: 1rem;
       text-align: center;
       font-size: 1.5rem;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
     main {
       flex: 1;
@@ -52,26 +59,16 @@
       flex-wrap: wrap;
       gap: 0.5rem;
     }
-    select, input[type="file"], input[type="search"], button {
+    select, input[type="file"], input[type="search"] {
       padding: 0.5rem;
-      border: 1px solid #2a2a3a;
+      border: 1px solid var(--secondary);
       border-radius: 5px;
       background: var(--secondary);
       color: var(--text);
-      transition: all 0.3s ease;
+      transition: all 0.2s ease;
     }
-    input[type="search"] {
-      flex: 1;
-    }
-    button {
-      cursor: pointer;
-      background: var(--accent);
-      color: #111;
-      font-weight: bold;
-    }
-    button:hover {
-      background: var(--highlight);
-      color: white;
+    input[type="search"]:focus {
+      outline: 2px solid var(--accent);
     }
     .channel-list {
       display: flex;
@@ -79,7 +76,7 @@
       gap: 0.5rem;
       overflow-y: auto;
       max-height: 70vh;
-      border: 1px solid #2a2a3a;
+      border: 1px solid var(--secondary);
       padding: 0.5rem;
       border-radius: 5px;
       background: var(--secondary);
@@ -99,7 +96,7 @@
       background: var(--accent);
       color: #111;
       border-color: var(--accent);
-      transform: translateX(5px);
+      transform: translateX(3px);
     }
     .channel-item img {
       width: 32px;
@@ -119,7 +116,6 @@
       text-align: center;
       font-size: 0.9rem;
       padding: 1rem;
-      opacity: 0.6;
       background: var(--secondary);
     }
     .toggle-list {
@@ -129,16 +125,6 @@
       text-align: right;
       font-weight: bold;
     }
-    .player-controls {
-      margin-top: 0.5rem;
-      display: flex;
-      gap: 0.5rem;
-    }
-    .error-message {
-      color: #ff6b6b;
-      padding: 1rem;
-      text-align: center;
-    }
     @media (max-width: 768px) {
       main {
         flex-direction: column;
@@ -146,14 +132,11 @@
       .sidebar {
         width: 100%;
       }
-      .video-container {
-        order: 1;
-      }
     }
   </style>
 </head>
 <body>
-  <header>🌐 IPTV Player</header>
+  <header>🇯🇵IPTV Player</header>
   <main>
     <div class="video-container">
       <video id="video" controls playsinline></video>
@@ -161,31 +144,22 @@
     <div class="sidebar">
       <div class="controls">
         <input type="search" id="search" placeholder="Search Channels">
-        <button id="proxy-toggle" title="Toggle CORS Proxy">🔀 Proxy</button>
-      </div>
-      <div class="controls">
         <input type="file" id="upload" accept=".m3u">
-        <button id="load-default">Load Default</button>
       </div>
       <div class="toggle-list" onclick="toggleChannelList()">📺 Show/Hide Channel List</div>
       <div class="channel-list" id="channel-list"></div>
-      <div id="error-message" class="error-message" style="display: none;"></div>
     </div>
   </main>
   <footer>
-    Data source: <a href="https://github.com/luongz/iptv-jp" target="_blank" style="color: var(--accent);">luongz/iptv-jp</a>
+    Data source:<a href="https://github.com/luongz/iptv-jp" target="_blank">luongz/iptv-jp</a>
   </footer>
   <script src="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.polyfilled.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script>
     const defaultM3U = 'https://raw.githubusercontent.com/luongz/iptv-jp/refs/heads/main/jp.m3u';
-    const corsProxy = 'https://cors-anywhere.herokuapp.com/';
     const listEl = document.getElementById('channel-list');
     const searchEl = document.getElementById('search');
     const uploadEl = document.getElementById('upload');
-    const loadDefaultBtn = document.getElementById('load-default');
-    const proxyToggleBtn = document.getElementById('proxy-toggle');
-    const errorMessageEl = document.getElementById('error-message');
     const videoElement = document.getElementById('video');
 
     const player = new Plyr(videoElement, {
@@ -194,7 +168,6 @@
     });
 
     let allChannels = [], currentIndex = 0, hlsInstance;
-    let useProxy = false;
 
     async function parseM3U(text) {
       const lines = text.split('\n');
@@ -213,10 +186,6 @@
 
     function showChannels(list) {
       listEl.innerHTML = '';
-      if (list.length === 0) {
-        listEl.innerHTML = '<div class="channel-item">No channels found</div>';
-        return;
-      }
       list.forEach((channel, index) => {
         const el = document.createElement('div');
         el.className = 'channel-item';
@@ -226,92 +195,46 @@
       });
     }
 
-    function showError(message) {
-      errorMessageEl.textContent = message;
-      errorMessageEl.style.display = 'block';
-      setTimeout(() => {
-        errorMessageEl.style.display = 'none';
-      }, 5000);
-    }
-
     function playChannel(index) {
       const channel = allChannels[index];
       if (!channel) return;
-      
       currentIndex = index;
       Array.from(listEl.children).forEach((el, i) => {
         el.classList.toggle('active', i === index);
       });
-      
       if (hlsInstance) {
         hlsInstance.destroy();
         hlsInstance = null;
       }
-      
-      let playbackUrl = channel.url;
-      if (useProxy) {
-        playbackUrl = corsProxy + channel.url;
-      }
-
       if (Hls.isSupported()) {
         hlsInstance = new Hls({
           enableWorker: true,
-          backBufferLength: 30,
-          xhrSetup: function(xhr) {
-            if (useProxy) {
-              xhr.withCredentials = false;
-            }
-          }
+          backBufferLength: 30
         });
-        
-        hlsInstance.on(Hls.Events.ERROR, (event, data) => {
-          if (data.fatal) {
-            switch(data.type) {
-              case Hls.ErrorTypes.NETWORK_ERROR:
-                showError('Network error - trying with proxy...');
-                useProxy = true;
-                playChannel(currentIndex);
-                break;
-              case Hls.ErrorTypes.MEDIA_ERROR:
-                showError('Media error - trying to recover...');
-                hlsInstance.recoverMediaError();
-                break;
-              default:
-                showError('Unable to play this stream');
-                break;
-            }
-          }
-        });
-        
-        hlsInstance.loadSource(playbackUrl);
+        hlsInstance.loadSource(channel.url);
         hlsInstance.attachMedia(videoElement);
+        player.source = {
+          type: 'video',
+          sources: [{ src: channel.url, type: 'application/vnd.apple.mpegurl' }]
+        };
       } else if (videoElement.canPlayType('application/vnd.apple.mpegurl')) {
-        videoElement.src = playbackUrl;
+        videoElement.src = channel.url;
       } else {
-        showError('HLS playback is not supported in your browser');
+        alert('HLS playback is not supported, please change the browser');
       }
     }
 
     function updateSearch(keyword) {
-      const filtered = allChannels.filter(c => 
-        c.name.toLowerCase().includes(keyword.toLowerCase()) ||
-        (c.group && c.group.toLowerCase().includes(keyword.toLowerCase()))
-      );
+      const filtered = allChannels.filter(c => c.name.toLowerCase().includes(keyword.toLowerCase()));
       showChannels(filtered);
     }
 
     async function initFromUrl(url) {
-      try {
-        const res = await fetch(useProxy ? corsProxy + url : url);
-        if (!res.ok) throw new Error('Failed to fetch playlist');
-        const text = await res.text();
-        allChannels = await parseM3U(text);
-        showChannels(allChannels);
-        if (allChannels[0]) playChannel(0);
-      } catch (error) {
-        showError('Error loading playlist: ' + error.message);
-        console.error(error);
-      }
+      const res = await fetch(url);
+      const text = await res.text();
+      allChannels = await parseM3U(text);
+      showChannels(allChannels);
+      if (allChannels[0]) playChannel(0);
     }
 
     uploadEl.addEventListener('change', e => {
@@ -323,12 +246,8 @@
           allChannels = channels;
           showChannels(allChannels);
           if (allChannels[0]) playChannel(0);
-        }).catch(error => {
-          showError('Error parsing playlist file');
-          console.error(error);
         });
       };
-      reader.onerror = () => showError('Error reading file');
       reader.readAsText(file);
     });
 
@@ -338,20 +257,6 @@
       listEl.style.display = (listEl.style.display === 'none' || getComputedStyle(listEl).display === 'none') ? 'flex' : 'none';
     }
 
-    proxyToggleBtn.addEventListener('click', () => {
-      useProxy = !useProxy;
-      proxyToggleBtn.style.background = useProxy ? 'var(--highlight)' : 'var(--accent)';
-      proxyToggleBtn.title = useProxy ? 'Disable CORS Proxy' : 'Enable CORS Proxy';
-      if (allChannels.length > 0 && currentIndex >= 0) {
-        playChannel(currentIndex);
-      }
-    });
-
-    loadDefaultBtn.addEventListener('click', () => {
-      initFromUrl(defaultM3U);
-    });
-
-    // Initialize
     initFromUrl(defaultM3U);
   </script>
 </body>

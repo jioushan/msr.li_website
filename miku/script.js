@@ -179,13 +179,19 @@
     function playAudio() {
         // Set the start time first, then play. This is more reliable.
         audio.currentTime = 18; // Start at 0:18
-        audio.play().then(() => {
-            console.log("Audio playback started after user gesture.");
-            updateMuteButton(false);
-            audio.muted = false;
-        }).catch(error => {
-            console.error("Audio playback failed:", error);
-        });
+        const playPromise = audio.play();
+
+        if (playPromise !== undefined) {
+            playPromise.then(() => {
+                console.log("Audio playback started after user gesture.");
+                updateMuteButton(false);
+                audio.muted = false;
+            }).catch(error => {
+                console.error("Audio playback failed:", error);
+                // On some mobile browsers, a second interaction might be needed.
+                // We can re-add a listener here if needed, but for now, we'll log the error.
+            });
+        }
     }
 
     function togglePlayback() {

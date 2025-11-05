@@ -2,26 +2,30 @@
 <html lang="en">
 <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <meta name="theme-color" content="#02030a">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content=" #00c2ff">
     <title>Miku Interactive — oo ee oo</title>
     <link rel="icon" href="https://www.jioushan.top/favicon_pack/android-chrome-192x192.png" type="image/png">
     <link rel="stylesheet" href="https://msr.li/miku/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <!-- Preload critical assets -->
+    <link rel="preload" href="https://msr.li/miku/miku.mp3" as="audio">
+    <link rel="preload" href="https://static.wikitide.net/projectsekaiwiki/a/a9/Miku_1_cutout.png" as="image">
 </head>
 <body>
     <!-- Loading/Interaction Prompt -->
     <div id="loading-overlay">
         <div class="loading-container">
-            <img src="https://dinopixel.com/preload/0922/Miku-Loading-Screen.png" alt="Miku Loading" class="loading-icon">
-            <div class="loading-text">Click anywhere to begin the experience</div>
+            <img src="https://www.jioushan.top/favicon_pack/android-chrome-192x192.png" alt="Miku Loading" class="loading-icon">
+            <div class="loading-text">Click anywhere to begin the start</div>
         </div>
     </div>
 
     <!-- Local Audio Player: Hidden in the background -->
-    <audio id="background-audio" loop crossorigin="anonymous">
+    <audio id="background-audio" loop crossorigin="anonymous" preload="metadata">
         <source src="https://msr.li/miku/miku.mp3" type="audio/mpeg">
         Your browser does not support the audio element.
     </audio>
@@ -42,7 +46,7 @@
             <div class="hero-background" id="hero-bg"></div>
             <div class="stage" id="stage">
                 <div class="miku-sway-container">
-                    <img src="" alt="Hatsune Miku" class="miku-main-visual" id="miku-visual">
+                    <img src="" alt="Hatsune Miku" class="miku-main-visual" id="miku-visual" decoding="async">
                 </div>
             </div>
             <div class="hero-title">
@@ -55,7 +59,7 @@
         <section class="page-conveyor" data-show-player="false">
             <div class="conveyor-background" id="conveyor-bg"></div>
             <div class="conveyor-drop-container">
-                <img src="" alt="Falling Miku" class="falling-miku" id="falling-miku">
+                <img src="" alt="Falling Miku" class="falling-miku" id="falling-miku" loading="lazy" decoding="async">
             </div>
         </section>
 
@@ -64,10 +68,10 @@
             <div class="charging-background" id="charging-bg"></div>
 
             <div class="charging-effect-container">
-                <img src="" alt="Charging Miku" class="charging-miku" id="charging-miku">
-                <img src="https://static.wikitide.net/projectsekaiwiki/1/15/Default_21_%28front%29.png" alt="Plug Body" class="plug" id="plug-body">
-                <img src="https://static.wikitide.net/projectsekaiwiki/1/15/Default_21_%28front%29.png" alt="Plug Head" class="plug" id="plug-head">
-                <img src="https://static.wikitide.net/projectsekaiwiki/1/15/Default_21_%28front%29.png" alt="Electricity" class="electricity">
+                <img src="" alt="Charging Miku" class="charging-miku" id="charging-miku" loading="lazy" decoding="async">
+                <img src="https://static.wikitide.net/projectsekaiwiki/1/15/Default_21_%28front%29.png" alt="Plug Body" class="plug" id="plug-body" loading="lazy" decoding="async">
+                <img src="https://static.wikitide.net/projectsekaiwiki/1/15/Default_21_%28front%29.png" alt="Plug Head" class="plug" id="plug-head" loading="lazy" decoding="async">
+                <img src="https://static.wikitide.net/projectsekaiwiki/1/15/Default_21_%28front%29.png" alt="Electricity" class="electricity" loading="lazy" decoding="async">
             </div>
         </section>
 
@@ -76,7 +80,7 @@
              <div class="showcase-background" id="showcase-bg"></div>
              <div class="visualizer-container">
                 <div id="showcase-miku-container" class="showcase-miku-container">
-                    <img src="" alt="Showcase Miku" id="showcase-miku">
+                    <img src="" alt="Showcase Miku" id="showcase-miku" loading="lazy" decoding="async">
                 </div>
                 <div class="song-info">
                     <h2 id="song-title">Miku</h2>
@@ -90,7 +94,7 @@
             <div class="player-background" id="player-bg"></div>
             <div class="aplayer-style-container">
                 <div class="aplayer-cover">
-                    <img src="" alt="Album Art" id="album-art">
+                    <img src="" alt="Album Art" id="album-art" loading="lazy" decoding="async">
                 </div>
                 <div class="aplayer-info">
                     <h2 class="aplayer-title">Miku ft. Hatsune Miku</h2>

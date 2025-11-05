@@ -9,7 +9,7 @@
 
 html {
     /* Custom Miku Cursor! */
-    cursor: url('https://i.imgur.com/5xK3k1J.png') 16 16, auto;
+    cursor: url('https://www.jioushan.top/favicon_pack/android-chrome-192x192.png') 16 16, auto;
     
     /* Firefox Scrollbar Styling */
     scrollbar-width: thin;
@@ -380,6 +380,8 @@ section {
     height: 150px;
     z-index: 100;
     pointer-events: none;
+    /* Add padding for iPhone safe area */
+    padding-bottom: env(safe-area-inset-bottom);
 }
 
 

@@ -74,6 +74,8 @@
     let analyser;
     let source;
     let dataArray;
+    let deviceOrientation = { alpha: 0, beta: 0, gamma: 0 };
+    let hasGyroscope = false;
 
     // --- UTILITY FUNCTIONS ---
     function shuffleArray(array) {
@@ -144,6 +146,33 @@
         console.log("Audio graph corrected: Source -> Analyser AND Source -> Destination");
     }
 
+    function setupGyroscopeControls() {
+        // Feature detection for DeviceOrientationEvent
+        if (window.DeviceOrientationEvent) {
+            // iOS 13+ requires explicit permission
+            if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                DeviceOrientationEvent.requestPermission()
+                    .then(permissionState => {
+                        if (permissionState === 'granted') {
+                            window.addEventListener('deviceorientation', handleOrientation);
+                            hasGyroscope = true;
+                        }
+                    })
+                    .catch(console.error);
+            } else {
+                // For other devices that don't require explicit permission
+                window.addEventListener('deviceorientation', handleOrientation);
+                hasGyroscope = true;
+            }
+        }
+    }
+
+    function handleOrientation(event) {
+        // We'll use gamma (left-to-right tilt) and beta (front-to-back tilt)
+        deviceOrientation.gamma = event.gamma; // -90 to 90
+        deviceOrientation.beta = event.beta;   // -180 to 180
+    }
+
     function handleFirstGesture() {
         // Prevent this from running multiple times
         window.removeEventListener('click', handleFirstGesture);
@@ -160,36 +189,48 @@
                 setupAudioVisualizer();
             }
 
-            // Resume AudioContext if it's suspended
-            if (audioContext.state === 'suspended') {
-                audioContext.resume().then(() => {
-                    console.log("AudioContext resumed successfully.");
-                    playAudio();
+            // Attempt to play the audio directly. This is often required on mobile.
+            const playPromise = audio.play();
+
+            if (playPromise !== undefined) {
+                playPromise.then(() => {
+                    console.log("Audio playback started successfully on first attempt.");
+                    audio.currentTime = 18; // Start at 0:18
+                    updateMuteButton(false);
+                    audio.muted = false;
                 }).catch(error => {
-                    console.error("AudioContext resume failed:", error);
+                    console.error("Initial play() failed, likely due to autoplay policy. Resuming context.", error);
+                    // If play() fails, it's often because the AudioContext is suspended.
+                    // Resume it and try playing again.
+                    if (audioContext.state === 'suspended') {
+                        audioContext.resume().then(() => {
+                            console.log("AudioContext resumed successfully.");
+                            playAudio(); // This calls the separate playAudio function
+                        }).catch(resumeError => {
+                            console.error("AudioContext resume failed:", resumeError);
+                        });
+                    }
                 });
             } else {
-                playAudio();
+                 playAudio();
             }
         };
 
         startAudio();
+        setupGyroscopeControls();
     }
 
     function playAudio() {
-        // Set the start time first, then play. This is more reliable.
-        audio.currentTime = 18; // Start at 0:18
+        // This function is now a fallback or for subsequent plays
         const playPromise = audio.play();
-
         if (playPromise !== undefined) {
             playPromise.then(() => {
-                console.log("Audio playback started after user gesture.");
+                if (audio.currentTime < 18) audio.currentTime = 18;
+                console.log("Audio playback started.");
                 updateMuteButton(false);
                 audio.muted = false;
             }).catch(error => {
                 console.error("Audio playback failed:", error);
-                // On some mobile browsers, a second interaction might be needed.
-                // We can re-add a listener here if needed, but for now, we'll log the error.
             });
         }
     }
@@ -312,10 +353,23 @@
         requestAnimationFrame(animate);
 
         const currentTime = audio.currentTime || 0;
+        let swayX = 0;
+        let swayY = 0;
+        let rotation = 0;
 
-        const swayX = -mouseX * 30;
-        const swayY = -mouseY * 15;
-        const rotation = mouseX * 8;
+        if (hasGyroscope && (deviceOrientation.gamma !== 0 || deviceOrientation.beta !== 0)) {
+            // Use gyroscope data on mobile devices
+            // Adjust multipliers for desired sensitivity
+            swayX = -deviceOrientation.gamma * 1.2; // Left-right tilt
+            swayY = -(deviceOrientation.beta - 90) * 0.5; // Front-back tilt, assuming a baseline of 90deg
+            rotation = -deviceOrientation.gamma * 0.5;
+        } else {
+            // Fallback to mouse controls on desktop
+            swayX = -mouseX * 30;
+            swayY = -mouseY * 15;
+            rotation = mouseX * 8;
+        }
+
         mikuSwayContainer.style.transform = `translate(${swayX}px, ${swayY}px) rotate(${rotation}deg)`;
 
         const pulse = 1 + Math.sin(currentTime * Math.PI) * 0.02;

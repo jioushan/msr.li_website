@@ -153,22 +153,27 @@
         loadingOverlay.style.opacity = 0;
         setTimeout(() => { loadingOverlay.style.display = 'none'; }, 500);
 
-        if (!audioContext) {
-            setupAudioVisualizer();
-        }
+        // The most robust way to handle autoplay policies is to create/resume the context
+        // and play the audio inside the same user gesture.
+        const startAudio = () => {
+            if (!audioContext) {
+                setupAudioVisualizer();
+            }
 
-        // Resume AudioContext and play audio *after* it's successfully resumed.
-        // This is the most robust way to handle browser autoplay policies.
-        if (audioContext.state === 'suspended') {
-            audioContext.resume().then(() => {
-                console.log("AudioContext resumed successfully.");
+            // Resume AudioContext if it's suspended
+            if (audioContext.state === 'suspended') {
+                audioContext.resume().then(() => {
+                    console.log("AudioContext resumed successfully.");
+                    playAudio();
+                }).catch(error => {
+                    console.error("AudioContext resume failed:", error);
+                });
+            } else {
                 playAudio();
-            }).catch(error => {
-                console.error("AudioContext resume failed:", error);
-            });
-        } else {
-            playAudio();
-        }
+            }
+        };
+
+        startAudio();
     }
 
     function playAudio() {

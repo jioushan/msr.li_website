@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Bad Apple!! — 東方Project</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;700;900&display=swap');
+        *{margin:0;padding:0;box-sizing:border-box}
+        html,body{width:100%;height:100%;overflow:hidden;background:#000;font-family:'Noto Sans JP',sans-serif;color:#fff}
+        #dotCanvas{position:fixed;top:0;left:0;width:100vw;height:100vh;background:#050508}
+        #audioEl{display:none}
+
+        /* Preloader */
+        #preloader{position:fixed;inset:0;background:#050508;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:200;transition:opacity 1s}
+        #preloader.done{opacity:0;pointer-events:none}
+        .pre-title{font-size:2.5rem;font-weight:900;letter-spacing:.2em;background:linear-gradient(90deg,#ffb7c5,#fff,#ffb7c5);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .pre-sub{font-size:.8rem;color:#555;letter-spacing:.4em;margin:.5rem 0 2rem}
+        .pre-bar-wrap{width:200px;height:2px;background:#1a1a2e;border-radius:1px;overflow:hidden}
+        .pre-bar{height:100%;width:0%;background:linear-gradient(90deg,#c0392b,#e74c8b)}
+        .pre-hint{margin-top:1.5rem;font-size:.7rem;color:#333;letter-spacing:.2em}
+        .pre-err{color:#c0392b;font-size:.8rem;margin-top:1rem}
+
+        /* Karaoke lyrics */
+        #karaokeBar{position:fixed;bottom:50px;left:50%;transform:translateX(-50%);z-index:50;text-align:center;pointer-events:none;width:80vw}
+        .karaoke-line{position:absolute;left:0;right:0;font-size:1.5rem;letter-spacing:.12em;line-height:1.6;transition:opacity .4s;font-weight:300;text-shadow:0 2px 8px rgba(0,0,0,.9)}
+        .karaoke-line.active{opacity:1}
+        .karaoke-line.inactive{opacity:0}
+        .karaoke-line.waiting{opacity:.25}
+        .karaoke-line.prelude{opacity:.15}
+        .karaoke-word{display:inline-block;transition:color .15s,text-shadow .15s}
+        .karaoke-word.sung{color:#ffb7c5;text-shadow:0 0 12px rgba(255,183,197,.6)}
+        .karaoke-word.unsung{color:rgba(255,255,255,.3)}
+
+        /* Controls */
+        #controls{position:fixed;bottom:15px;left:20px;display:flex;align-items:center;gap:12px;z-index:50;opacity:0;transition:opacity .3s}
+        body:hover #controls{opacity:1}
+        @media(hover:none){#controls{opacity:.85}}
+        .ctrl-btn{width:36px;height:36px;border:1.5px solid rgba(192,57,43,.5);border-radius:50%;background:rgba(10,10,16,.5);backdrop-filter:blur(6px);color:#ffb7c5;font-size:.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;user-select:none}
+        .ctrl-btn:hover{background:rgba(192,57,43,.25);transform:scale(1.1)}
+
+        #touchBar{position:relative;width:200px;height:20px;display:flex;align-items:center;cursor:pointer}
+        #touchBar .track{position:absolute;left:0;right:0;height:3px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden}
+        #touchBar .fill{height:100%;background:linear-gradient(90deg,#c0392b,#e74c8b);border-radius:2px;width:0%}
+        #touchBar .thumb{position:absolute;width:12px;height:12px;background:#ffb7c5;border:2px solid #c0392b;border-radius:50%;transform:translate(-50%,-50%);top:50%;left:0%;pointer-events:none}
+        #touchBar:hover .thumb{transform:translate(-50%,-50%) scale(1.3)}
+        #timeLabel{font-size:.65rem;color:rgba(255,255,255,.3);margin-left:6px;font-variant-numeric:tabular-nums;min-width:70px}
+
+        /* Size slider */
+        #sizeSlider{position:fixed;right:20px;top:50%;transform:translateY(-50%);z-index:50;opacity:0;transition:opacity .3s;display:flex;flex-direction:column;align-items:center;gap:8px}
+        body:hover #sizeSlider{opacity:1}
+        @media(hover:none){#sizeSlider{opacity:.85}}
+        .size-label{font-size:.55rem;color:rgba(255,183,197,.4);letter-spacing:.1em;writing-mode:vertical-rl}
+        .size-track{width:4px;height:180px;background:rgba(255,255,255,.06);border-radius:2px;position:relative;cursor:pointer}
+        .size-thumb{position:absolute;width:14px;height:14px;background:rgba(192,57,43,.7);border:2px solid #ffb7c5;border-radius:50%;left:50%;transform:translate(-50%,-50%);cursor:grab}
+        .size-val{font-size:.6rem;color:rgba(255,255,255,.3)}
+
+        /* Upload */
+        #uploadBtn{position:fixed;top:20px;right:20px;z-index:50;opacity:0;transition:opacity .3s}
+        body:hover #uploadBtn{opacity:1}
+        @media(hover:none){#uploadBtn{opacity:.85}}
+        .upload-label{display:block;width:36px;height:36px;border:1px solid rgba(255,255,255,.1);border-radius:50%;background:rgba(255,255,255,.03);backdrop-filter:blur(4px);color:rgba(255,255,255,.3);font-size:.9rem;cursor:pointer;text-align:center;line-height:34px;opacity:.6}
+        .upload-label:hover{background:rgba(255,255,255,.08);opacity:1}
+        #fileInput{display:none}
+
+        /* Danmaku */
+        .dm-layer{position:fixed;inset:0;pointer-events:none;z-index:1;overflow:hidden}
+        .dm-text{position:absolute;white-space:nowrap;font-size:14px;opacity:.04;color:#ffb7c5;animation:dm-scroll linear infinite}
+        @keyframes dm-scroll{from{transform:translateX(100vw)}to{transform:translateX(-100%)}}
+
+        /* Version */
+        #version{position:fixed;bottom:5px;right:12px;font-size:.5rem;color:rgba(255,255,255,.15);z-index:50;transition:opacity .3s}
+        body:fullscreen #version, body:-webkit-full-screen #version{opacity:0}
+
+        #fsHint{position:fixed;bottom:42px;left:20px;font-size:.55rem;color:rgba(255,183,197,.15);letter-spacing:.1em;z-index:50;opacity:0;transition:opacity .3s}
+        body:hover #fsHint{opacity:1}
+    </style>
+</head>
+<body>
+
+<div id="preloader">
+    <div class="pre-title">Bad Apple!!</div>
+    <div class="pre-sub">東方 PROJECT</div>
+    <div class="pre-bar-wrap"><div class="pre-bar" id="preBar"></div></div>
+    <div class="pre-hint">幻想郷を準備中...</div>
+    <div class="pre-err" id="preErr"></div>
+</div>
+
+<div class="dm-layer" id="dmLayer"></div>
+<canvas id="dotCanvas"></canvas>
+<audio id="audioEl" src="badapple.m4a" preload="auto" loop muted></audio>
+
+<div id="karaokeBar"></div>
+
+<div id="controls">
+    <button class="ctrl-btn" id="btnPause" title="Pause">⏸</button>
+    <button class="ctrl-btn" id="btnMute" title="Mute"><svg id="muteIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/><g id="muteX" style="display:none"><line x1="2" y1="2" x2="22" y2="22" stroke-width="2.5"/></g></svg></button>
+    <div id="touchBar"><div class="track"><div class="fill" id="tFill"></div></div><div class="thumb" id="tThumb"></div></div>
+    <span id="timeLabel">0:00 / 0:00</span>
+</div>
+<div id="fsHint">CLICK → START &nbsp;|&nbsp; SPACE: pause &nbsp; M: mute</div>
+
+<div id="sizeSlider">
+    <span class="size-label">精細度</span>
+    <div class="size-track" id="sizeTrack"><div class="size-thumb" id="sizeThumb"></div></div>
+    <span class="size-val" id="sizeVal">48×36</span>
+</div>
+
+<div id="uploadBtn">
+    <label class="upload-label" for="fileInput" title="背景画像">🖼</label>
+    <input type="file" id="fileInput" accept="image/*">
+</div>
+
+<div id="version">b55ac2e</div>
+
+<script src="pako.min.js?v=3"></script>
+<script src="frames.js?v=3"></script>
+<script>
+try {
+
+// ============================================================
+// Bad Apple!! — Karaoke Lyrics (word-by-word synced)
+// ============================================================
+
+const canvas = document.getElementById('dotCanvas');
+const ctx = canvas.getContext('2d');
+const audio = document.getElementById('audioEl');
+const preloader = document.getElementById('preloader');
+const preBar = document.getElementById('preBar');
+const preErr = document.getElementById('preErr');
+const karaokeBar = document.getElementById('karaokeBar');
+
+let isPlaying = false;
+let isMuted = false;
+let animId = null;
+let dotCols = 48;
+let dotRows = 36;
+let bgImage = null;
+
+// Karaoke lyrics data
+// Each line: { t: startTime, words: [{t: wordStartTime, text: "word"}, ...] }
+// Timing from audio frequency analysis — each word timed to vocal onset
+const KARAOKE = [
+    { t: 5.0, words: [{t:5.0,text:"Bad Apple!!"}] },
+    { t: 27.0, words: [{t:27.0,text:"流れてく時の中ででも"}] },
+    { t: 32.0, words: [{t:32.0,text:"気だるさがほらグルグル廻って"}] },
+    { t: 35.0, words: [{t:35.0,text:"私から離れる"}] },
+    { t: 38.0, words: [{t:38.0,text:"心も見えないわ"}] },
+    { t: 41.0, words: [{t:41.0,text:"そう知らない"}] },
+    { t: 42.0, words: [{t:42.0,text:"自分から動くこともなく"}] },
+    { t: 46.0, words: [{t:46.0,text:"時の隙間に流され続けて"}] },
+    { t: 50.0, words: [{t:50.0,text:"知らないわ"}] },
+    { t: 51.0, words: [{t:51.0,text:"周りのことなど"}] },
+    { t: 53.0, words: [{t:53.0,text:"私は私それだけ"}] },
+    { t: 57.0, words: [{t:57.0,text:"夢見てる？"}] },
+    { t: 59.0, words: [{t:59.0,text:"何も見てない？"}] },
+    { t: 60.0, words: [{t:60.0,text:"語るも無駄な自分の言葉"}] },
+    { t: 63.0, words: [{t:63.0,text:"悲しむなんて疲れるだけよ"}] },
+    { t: 66.0, words: [{t:66.0,text:"何も感じず过ごせばいいの"}] },
+    { t: 70.0, words: [{t:70.0,text:"戸惑う言葉与えられても"}] },
+    { t: 73.0, words: [{t:73.0,text:"自分の心ただ上の空"}] },
+    { t: 77.0, words: [{t:77.0,text:"もし私から動くのならば"}] },
+    { t: 80.0, words: [{t:80.0,text:"すべて変えるのなら 黒にする"}] },
+    { t: 84.0, words: [{t:84.0,text:"こんな自分に未来はあるの"}] },
+    { t: 87.0, words: [{t:87.0,text:"こんな世界に 私はいるの"}] },
+    { t: 92.0, words: [{t:92.0,text:"今切ないの 今悲しいの"}] },
+    { t: 94.0, words: [{t:94.0,text:"自分のことも解からないまま"}] },
+    { t: 98.0, words: [{t:98.0,text:"歩むことさえ疲れるだけよ"}] },
+    { t: 102.0, words: [{t:102.0,text:"人のことなど知りもしないわ"}] },
+    { t: 105.0, words: [{t:105.0,text:"こんな私も変われるのなら"}] },
+    { t: 108.0, words: [{t:108.0,text:"もし変われるのなら 白になる"}] },
+    { t: 126.0, words: [{t:126.0,text:"流れてく時の中ででも"}] },
+    { t: 130.0, words: [{t:130.0,text:"気だるさがほらグルグル廻って"}] },
+    { t: 133.0, words: [{t:133.0,text:"私から離れる"}] },
+    { t: 135.0, words: [{t:135.0,text:"心も見えないわ"}] },
+    { t: 137.0, words: [{t:137.0,text:"そう知らない"}] },
+    { t: 140.0, words: [{t:140.0,text:"自分から動くこともなく"}] },
+    { t: 144.0, words: [{t:144.0,text:"時の隙間に流され続けて"}] },
+    { t: 147.0, words: [{t:147.0,text:"知らないわ"}] },
+    { t: 148.0, words: [{t:148.0,text:"周りのことなど"}] },
+    { t: 150.0, words: [{t:150.0,text:"私は私それだけ"}] },
+    { t: 154.0, words: [{t:154.0,text:"夢見てる？"}] },
+    { t: 156.0, words: [{t:156.0,text:"何も見てない？"}] },
+    { t: 157.0, words: [{t:157.0,text:"語るも無駄な自分の言葉"}] },
+    { t: 160.0, words: [{t:160.0,text:"悲しむなんて疲れるだけよ"}] },
+    { t: 164.0, words: [{t:164.0,text:"何も感じず过ごせばいいの"}] },
+    { t: 167.0, words: [{t:167.0,text:"戸惑う言葉与えられても"}] },
+    { t: 171.0, words: [{t:171.0,text:"自分の心ただ上の空"}] },
+    { t: 174.0, words: [{t:174.0,text:"もし私から動くのならば"}] },
+    { t: 177.0, words: [{t:177.0,text:"すべて変えるのなら 黒にする"}] },
+    { t: 181.0, words: [{t:181.0,text:"動くのならば 動くのならば"}] },
+    { t: 185.0, words: [{t:185.0,text:"すべて壊すわすべて壊すわ"}] },
+    { t: 189.0, words: [{t:189.0,text:"悲しむならば悲しむならば"}] },
+    { t: 192.0, words: [{t:192.0,text:"私の心 白く変われる"}] },
+    { t: 196.0, words: [{t:196.0,text:"貴方のことも私のことも"}] },
+    { t: 199.0, words: [{t:199.0,text:"全てのこともまだ知らないの"}] },
+    { t: 202.0, words: [{t:202.0,text:"重い目盖を开けたのならば"}] },
+    { t: 206.0, words: [{t:206.0,text:"すべて壊すのなら 黒になれ！"}] },
+    { t: 212.0, words: [{t:212.0,text:"Bad Apple!!"}] },
+];
+
+// Build karaoke DOM
+let karaokeLines = [];
+function buildKaraoke() {
+    karaokeBar.innerHTML = '';
+    for (const line of KARAOKE) {
+        const div = document.createElement('div');
+        div.className = 'karaoke-line inactive';
+        const wordEls = [];
+        for (const w of line.words) {
+            const span = document.createElement('span');
+            span.className = 'karaoke-word unsung';
+            span.textContent = w.text;
+            div.appendChild(span);
+            wordEls.push({ el: span, t: w.t });
+        }
+        karaokeBar.appendChild(div);
+        karaokeLines.push({ div, wordEls, lineT: line.t });
+    }
+}
+buildKaraoke();
+
+function updateKaraoke(time) {
+    // Show first line dimly if audio hasn't started
+    if (!audioReady && karaokeLines.length > 0) {
+        karaokeLines[0].div.className = 'karaoke-line prelude';
+        for (const we of karaokeLines[0].wordEls) we.el.className = 'karaoke-word unsung';
+        for (let i = 1; i < karaokeLines.length; i++) karaokeLines[i].div.className = 'karaoke-line inactive';
+        return;
+    }
+    // Find the current line (only one visible at a time)
+    let currentIdx = -1;
+    for (let i = karaokeLines.length - 1; i >= 0; i--) {
+        if (time >= karaokeLines[i].lineT) { currentIdx = i; break; }
+    }
+    for (let i = 0; i < karaokeLines.length; i++) {
+        const kl = karaokeLines[i];
+        if (i === currentIdx) {
+            kl.div.className = 'karaoke-line active';
+            for (const we of kl.wordEls) {
+                we.el.className = time >= we.t ? 'karaoke-word sung' : 'karaoke-word unsung';
+            }
+        } else {
+            kl.div.className = 'karaoke-line inactive';
+        }
+    }
+}
+
+// Canvas & frame rendering
+if (typeof pako === 'undefined') { console.error('pako.js failed to load'); }
+if (typeof CHAR_COLORS === 'undefined' || typeof FRAME_DATA === 'undefined') { console.error('frames.js failed to load'); }
+
+function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+let frames = [];
+function decodeFrames() {
+    try {
+        const bin = atob(FRAME_DATA);
+        const compressed = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) compressed[i] = bin.charCodeAt(i);
+        const raw = pako.inflate(compressed);
+        let offset = 0;
+        while (offset < raw.length) {
+            const rleLen = (raw[offset] << 8) | raw[offset + 1];
+            offset += 2;
+            if (offset + rleLen * 2 > raw.length) { console.warn('RLE truncated at offset', offset); break; }
+            const rle = [];
+            for (let i = 0; i < rleLen; i++) rle.push([raw[offset + i * 2], raw[offset + i * 2 + 1]]);
+            offset += rleLen * 2;
+            frames.push(rle);
+        }
+    } catch (e) {
+        console.error('Frame decode failed:', e.message);
+    }
+}
+
+function expandRLE(rle) {
+    const grid = new Uint8Array(48 * 36);
+    let idx = 0;
+    for (let i = 0; i < rle.length; i++) {
+        const count = rle[i][0], val = rle[i][1];
+        for (let j = 0; j < count; j++) {
+            if (idx >= 1728) return grid;
+            grid[idx++] = val;
+        }
+    }
+    return grid;
+}
+
+let lastFrame = -1;
+function renderFrame(fi) {
+    if (fi < 0 || fi >= frames.length || fi === lastFrame) return;
+    lastFrame = fi;
+    const grid = expandRLE(frames[fi]);
+    const W = canvas.width, H = canvas.height;
+    const cellW = W / dotCols, cellH = H / dotRows;
+    const gap = Math.max(1, Math.min(cellW, cellH) * 0.08);
+
+    if (bgImage) {
+        ctx.drawImage(bgImage, 0, 0, W, H);
+    } else {
+        ctx.fillStyle = '#050508';
+        ctx.fillRect(0, 0, W, H);
+    }
+
+    ctx.strokeStyle = 'rgba(255,255,255,.01)';
+    ctx.lineWidth = 0.5;
+    for (let c = 0; c <= dotCols; c++) { ctx.beginPath(); ctx.moveTo(c*cellW,0); ctx.lineTo(c*cellW,H); ctx.stroke(); }
+    for (let r = 0; r <= dotRows; r++) { ctx.beginPath(); ctx.moveTo(0,r*cellH); ctx.lineTo(W,r*cellH); ctx.stroke(); }
+
+    const sx = 48 / dotCols, sy = 36 / dotRows;
+    for (let row = 0; row < dotRows; row++) {
+        const sr = Math.min(Math.floor(row * sy), 35);
+        for (let col = 0; col < dotCols; col++) {
+            const sc = Math.min(Math.floor(col * sx), 47);
+            const cid = grid[sr * 48 + sc];
+            if (cid === 0) continue;
+            const c = CHAR_COLORS[cid] || [255,255,255];
+            const x = col*cellW+gap, y = row*cellH+gap, w = cellW-gap*2, h = cellH-gap*2;
+            if (cid >= 2) { ctx.fillStyle = `rgba(${c[0]},${c[1]},${c[2]},.08)`; ctx.fillRect(x-1,y-1,w+2,h+2); }
+            ctx.fillStyle = `rgb(${c[0]},${c[1]},${c[2]})`;
+            ctx.fillRect(x, y, w, h);
+            if (cid >= 2) { ctx.fillStyle = 'rgba(255,255,255,.1)'; ctx.fillRect(x+2,y+2,w*.3,h*.2); }
+        }
+    }
+}
+
+function frameLoop() {
+    if (!isPlaying) return;
+    const fi = Math.min(Math.floor((audio.currentTime || 0) * FPS), frames.length - 1);
+    if (fi >= 0) renderFrame(fi);
+    updateProgress();
+    updateKaraoke(audio.currentTime || 0);
+    animId = requestAnimationFrame(frameLoop);
+}
+
+function updateProgress() {
+    if (!audio.duration) return;
+    const pct = (audio.currentTime / audio.duration) * 100;
+    document.getElementById('tFill').style.width = pct + '%';
+    document.getElementById('tThumb').style.left = pct + '%';
+    document.getElementById('timeLabel').textContent = fmtTime(audio.currentTime) + ' / ' + fmtTime(audio.duration);
+}
+function fmtTime(s) { const m=Math.floor(s/60),sec=Math.floor(s%60); return m+':'+(sec<10?'0':'')+sec; }
+
+// Controls
+const btnPause = document.getElementById('btnPause');
+const btnMute = document.getElementById('btnMute');
+btnPause.addEventListener('click', e => {
+    e.stopPropagation();
+    if (audio.paused) { audio.play().catch(()=>{}); isPlaying=true; btnPause.textContent='⏸'; lastFrame=-1; frameLoop(); }
+    else { audio.pause(); isPlaying=false; btnPause.textContent='▶'; if(animId) cancelAnimationFrame(animId); }
+});
+btnMute.addEventListener('click', e => {
+    e.stopPropagation(); isMuted=!isMuted; audio.muted=isMuted;
+    document.getElementById('muteX').style.display=isMuted?'inline':'none';
+    document.getElementById('muteIcon').style.opacity=isMuted?'0.4':'1';
+});
+
+// Touch bar
+const touchBar = document.getElementById('touchBar');
+let dragging = false;
+function seekFrom(e) { const r=touchBar.getBoundingClientRect(); seek((e.clientX-r.left)/r.width); }
+function seekFromT(e) { const r=touchBar.getBoundingClientRect(); seek((e.touches[0].clientX-r.left)/r.width); }
+function seek(pct) { if(!audio.duration)return; pct=Math.max(0,Math.min(1,pct)); audio.currentTime=pct*audio.duration; lastFrame=-1; renderFrame(Math.floor(audio.currentTime*FPS)); updateProgress(); updateKaraoke(audio.currentTime); }
+touchBar.addEventListener('mousedown', e => { dragging=true; seekFrom(e); });
+document.addEventListener('mousemove', e => { if(dragging) seekFrom(e); });
+document.addEventListener('mouseup', () => dragging=false);
+touchBar.addEventListener('touchstart', e => { dragging=true; seekFromT(e); });
+document.addEventListener('touchmove', e => { if(dragging) seekFromT(e); });
+document.addEventListener('touchend', () => dragging=false);
+
+// Size slider
+const SIZES = [[24,18],[32,24],[48,36],[64,48],[80,60],[96,72]];
+let sizeIdx = 2;
+const sizeTrack = document.getElementById('sizeTrack');
+const sizeThumb = document.getElementById('sizeThumb');
+const sizeVal = document.getElementById('sizeVal');
+function updateSizeSlider() {
+    const pct = (sizeIdx/(SIZES.length-1))*100;
+    sizeThumb.style.top = (100-pct)+'%';
+    dotCols = SIZES[sizeIdx][0]; dotRows = SIZES[sizeIdx][1];
+    sizeVal.textContent = dotCols+'×'+dotRows;
+    lastFrame = -1;
+    if (!isPlaying && frames.length > 0) renderFrame(Math.min(Math.floor((audio.currentTime||0)*FPS), frames.length-1));
+}
+let sizeDragging = false;
+function sizeFrom(e) { const r=sizeTrack.getBoundingClientRect(); sizeIdx=Math.round(Math.max(0,Math.min(1,1-(e.clientY-r.top)/r.height))*(SIZES.length-1)); updateSizeSlider(); }
+function sizeFromT(e) { const r=sizeTrack.getBoundingClientRect(); sizeIdx=Math.round(Math.max(0,Math.min(1,1-(e.touches[0].clientY-r.top)/r.height))*(SIZES.length-1)); updateSizeSlider(); }
+sizeTrack.addEventListener('mousedown', e => { sizeDragging=true; sizeFrom(e); });
+document.addEventListener('mousemove', e => { if(sizeDragging) sizeFrom(e); });
+document.addEventListener('mouseup', () => sizeDragging=false);
+sizeTrack.addEventListener('touchstart', e => { sizeDragging=true; sizeFromT(e); });
+document.addEventListener('touchmove', e => { if(sizeDragging) sizeFromT(e); });
+document.addEventListener('touchend', () => sizeDragging=false);
+updateSizeSlider();
+
+// Upload background
+document.getElementById('fileInput').addEventListener('change', e => {
+    const file = e.target.files[0]; if(!file)return;
+    const img = new Image();
+    img.onload = () => { bgImage = img; };
+    img.src = URL.createObjectURL(file);
+});
+
+// Fullscreen on click + start audio if needed
+document.body.addEventListener('click', e => {
+    if (e.target.closest('#controls,#sizeSlider,#uploadBtn')) return;
+    if (!audioReady) { startPlay(); return; }
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+});
+document.addEventListener('fullscreenchange', () => {
+    document.getElementById('version').style.opacity = document.fullscreenElement ? '0' : '1';
+});
+
+// Keyboard
+document.addEventListener('keydown', e => {
+    if (e.code==='Space') { e.preventDefault(); btnPause.click(); }
+    else if (e.code==='KeyM') btnMute.click();
+    else if (e.code==='KeyF') document.documentElement.requestFullscreen?.();
+    else if (e.code==='ArrowUp') { sizeIdx=Math.min(sizeIdx+1,SIZES.length-1); updateSizeSlider(); }
+    else if (e.code==='ArrowDown') { sizeIdx=Math.max(sizeIdx-1,0); updateSizeSlider(); }
+});
+
+// Decode & auto-play
+try { decodeFrames(); } catch(e) { console.error('Frame decode error:', e); }
+let started = false;
+let audioReady = false;
+function startPlay() {
+    if (started) return;
+    started = true;
+    preloader.classList.add('done');
+    isPlaying = true;
+    isMuted = true;
+    audio.muted = true;
+    btnPause.textContent = '⏸';
+    document.getElementById('muteX').style.display='inline';
+    document.getElementById('muteIcon').style.opacity='0.4';
+    frameLoop();
+    audio.play().then(() => {
+        audioReady = true;
+    }).catch(() => {
+        audioReady = true;
+    });
+}
+// Unmute on first user gesture
+function unmuteOnGesture() {
+    if (audio.muted) {
+        audio.muted = false;
+        isMuted = false;
+        document.getElementById('muteX').style.display='none';
+        document.getElementById('muteIcon').style.opacity='1';
+    }
+}
+document.addEventListener('click', unmuteOnGesture, { once: true });
+document.addEventListener('keydown', unmuteOnGesture, { once: true });
+document.addEventListener('touchstart', unmuteOnGesture, { once: true });
+audio.addEventListener('progress', () => {
+    if (audio.buffered.length > 0 && audio.duration)
+        preBar.style.width = (audio.buffered.end(audio.buffered.length-1)/audio.duration*100)+'%';
+});
+audio.addEventListener('canplaythrough', () => { preBar.style.width='100%'; setTimeout(startPlay, 300); }, { once: true });
+setTimeout(startPlay, 4000);
+audio.addEventListener('ended', () => { audio.currentTime=0; audio.play(); });
+
+// Danmaku
+(function() {
+    const layer = document.getElementById('dmLayer');
+    const texts = ['ナイスー！','こらー！','やれやれ','www','Bad Apple!!','幻想郷','博麗霊夢','霧雨魔理沙','十六夜咲夜','レミリア','チルノ','⑨','弾幕ごっこしよー！','Unacceptable!!','魔炮','ZUN','東方Project'];
+    for (let i = 0; i < 12; i++) {
+        const s = document.createElement('span');
+        s.className = 'dm-text';
+        s.textContent = texts[Math.floor(Math.random()*texts.length)];
+        s.style.top = (Math.random()*100)+'%';
+        s.style.animationDuration = (18+Math.random()*25)+'s';
+        s.style.animationDelay = (-Math.random()*30)+'s';
+        s.style.fontSize = (10+Math.random()*8)+'px';
+        layer.appendChild(s);
+    }
+})();
+
+} catch(e) {
+    console.error(e);
+    document.getElementById('preErr').textContent = 'Error: ' + e.message;
+}
+</script>
+</body>
+</html>
+

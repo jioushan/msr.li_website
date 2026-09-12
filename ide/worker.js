@@ -4,10 +4,10 @@ export default {
       const { code } = await request.json();
       if (!code) return new Response("No code provided", { status: 400 });
 
-      // 安全执行代码
-      const result = await runCode(code);
-
-      return new Response(JSON.stringify({ output: result }), {
+      return new Response(JSON.stringify({
+        error: "Executing arbitrary JavaScript is not supported in Cloudflare Workers. Run code in the IDE browser."
+      }), {
+        status: 501,
         headers: { "Content-Type": "application/json" },
       });
     } catch (error) {
@@ -18,12 +18,3 @@ export default {
     }
   },
 };
-
-async function runCode(code) {
-  try {
-    // 在安全环境中执行代码
-    return new Function(`"use strict"; return (async () => { ${code} })();`)();
-  } catch (error) {
-    return `Error: ${error.message}`;
-  }
-}

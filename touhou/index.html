@@ -350,7 +350,7 @@ const btnPause = document.getElementById('btnPause');
 const btnMute = document.getElementById('btnMute');
 btnPause.addEventListener('click', e => {
     e.stopPropagation();
-    if (audio.paused) { audio.play().catch(()=>{}); isPlaying=true; btnPause.textContent='⏸'; lastFrame=-1; frameLoop(); }
+    if (audio.paused) { startPlay(); }
     else { audio.pause(); isPlaying=false; btnPause.textContent='▶'; if(animId) cancelAnimationFrame(animId); }
 });
 btnMute.addEventListener('click', e => {
@@ -408,7 +408,7 @@ document.getElementById('fileInput').addEventListener('change', e => {
 // Fullscreen on click + start audio if needed
 document.body.addEventListener('click', e => {
     if (e.target.closest('#controls,#sizeSlider,#uploadBtn')) return;
-    if (!audioReady) { startPlay(); return; }
+    if (audio.paused) { startPlay(); return; }
     if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
 });
 document.addEventListener('fullscreenchange', () => {
@@ -429,9 +429,10 @@ try { decodeFrames(); } catch(e) { console.error('Frame decode error:', e); }
 let started = false;
 let audioReady = false;
 function startPlay() {
-    if (started) return;
-    started = true;
-    preloader.classList.add('done');
+    if (!started) {
+        started = true;
+        preloader.classList.add('done');
+    }
     isPlaying = true;
     isMuted = true;
     audio.muted = true;
@@ -442,7 +443,9 @@ function startPlay() {
     audio.play().then(() => {
         audioReady = true;
     }).catch(() => {
-        audioReady = true;
+        isPlaying = false;
+        btnPause.textContent = '▶';
+        if (animId) cancelAnimationFrame(animId);
     });
 }
 // Unmute on first user gesture
@@ -488,4 +491,3 @@ audio.addEventListener('ended', () => { audio.currentTime=0; audio.play(); });
 </script>
 </body>
 </html>
-

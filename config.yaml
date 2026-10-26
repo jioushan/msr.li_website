@@ -23,8 +23,8 @@ fallback-filter:
       - 240.0.0.0/4
       - 0.0.0.0/32
 proxies:
-  - {name: 2406:da14:21b:7700:c3a3:43ce:d120:39f2:44331, server: 2406:da14:21b:7700:c3a3:43ce:d120:39f2, port: 44331, type: vless, uuid: 40f71432-109c-34fd-8979-91cf70d82973, tls: true, flow: xtls-rprx-vision, skip-cert-verify: true, reality-opts: {public-key: Y-5UnMs7GMdVUorVYASSExB1Ei41BYGZpjZBo2eAWQk, short-id: "11cfb5563fe3b863" }, servername: images.apple.com, client-fingerprint: random, network: tcp, udp: true}
-  - {name: msrix:443, server: 82.40.42.93, port: 443, type: vless, uuid: fbea1b2f-8e78-4fa3-8e06-2cc22bb55497, tls: true, flow: xtls-rprx-vision, skip-cert-verify: true, reality-opts: {public-key: jg2lAMWMfMiwPxlYRqml_80SPVjreZMbxT7dBd-7r24, short-id: "103ab88c5a92256b" }, servername: swdist.apple.com, client-fingerprint: random, network: tcp, udp: true}
+  - {name: 2406:da14:21b:7700:c3a3:43ce:d120:39f2:44331, server: aws.jsmsr.com, port: 44331, type: vless, uuid: 40f71432-109c-34fd-8979-91cf70d82973, tls: true, flow: xtls-rprx-vision, skip-cert-verify: true, reality-opts: {public-key: Y-5UnMs7GMdVUorVYASSExB1Ei41BYGZpjZBo2eAWQk, short-id: "11cfb5563fe3b863" }, servername: images.apple.com, client-fingerprint: random, network: tcp, udp: true}
+  - {name: msrix:443, server: jp2.jsmsr.com, port: 443, type: vless, uuid: fbea1b2f-8e78-4fa3-8e06-2cc22bb55497, tls: true, flow: xtls-rprx-vision, skip-cert-verify: true, reality-opts: {public-key: jg2lAMWMfMiwPxlYRqml_80SPVjreZMbxT7dBd-7r24, short-id: "103ab88c5a92256b" }, servername: swdist.apple.com, client-fingerprint: random, network: tcp, udp: true}
 proxy-groups:
   - name: 🚀 节点选择
     type: select

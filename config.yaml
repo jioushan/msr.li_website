@@ -3,7 +3,6 @@ port: 7890
 socks-port: 7891
 allow-lan: true
 mode: Rule
-interface-name: ens18
 log-level: info
 ipv6: true            # ← 加這行
 external-controller: :9090
@@ -27,6 +26,7 @@ fallback-filter:
 proxies:
   - name: "2406:da14:21b:7700:c3a3:43ce:d120:39f2:44331"
     type: vless
+    interface-name: ens18
     server: 2406:da14:21b:7700:c3a3:43ce:d120:39f2
     port: 44331
     uuid: 40f71432-109c-34fd-8979-91cf70d82973

@@ -3,6 +3,7 @@ port: 7890
 socks-port: 7891
 allow-lan: true
 mode: Rule
+interface-name: ens18
 log-level: info
 ipv6: true            # ← 加這行
 external-controller: :9090

@@ -4572,6 +4572,7 @@ rules:
   - IP-CIDR6,2406:d440:300::/43,🎯 全球直连,no-resolve
   - IP-CIDR6,2406:d440:ff00::/48,🎯 全球直连,no-resolve
   - IP-CIDR6,2406:d440:ffff::/48,🎯 全球直连,no-resolve
+  - IP-CIDR6,2406:da14::/38,🎯 全球直连,no-resolve
   - IP-CIDR6,2406:e3c0::/32,🎯 全球直连,no-resolve
   - IP-CIDR6,2406:e500::/33,🎯 全球直连,no-resolve
   - IP-CIDR6,2407:23c0::/48,🎯 全球直连,no-resolve
@@ -6894,6 +6895,7 @@ rules:
   - IP-CIDR,101.251.8.0/21,🎯 全球直连,no-resolve
   - IP-CIDR,101.251.16.0/20,🎯 全球直连,no-resolve
   - IP-CIDR,101.251.32.0/19,🎯 全球直连,no-resolve
+  - IP-CIDR,82.40.40.0/22,🎯 全球直连,no-resolve
   - IP-CIDR,101.251.64.0/18,🎯 全球直连,no-resolve
   - IP-CIDR,101.251.128.0/17,🎯 全球直连,no-resolve
   - IP-CIDR,101.252.0.0/15,🎯 全球直连,no-resolve

@@ -3,13 +3,14 @@ socks-port: 7891
 allow-lan: true
 mode: Rule
 log-level: info
+ipv6: true            # ← 加這行
 external-controller: :9090
 dns:
   enable: true
   ipv6: true
   nameserver:
     - 2606:4700:4700::1111
-    - 223.5.5.5
+    - 1.1.1.1
   fallback:
     - 8.8.8.8
     - 8.8.4.4
@@ -22,7 +23,7 @@ fallback-filter:
       - 240.0.0.0/4
       - 0.0.0.0/32
 proxies:
-  - {name: 2406:da14:21b:7700:c3a3:43ce:d120:39f2:44331, server: 2406:da14:21b:7700:c3a3:43ce:d120:39f2, port: 44331, type: vless, uuid: 40f71432-109c-34fd-8979-91cf70d82973, tls: true, flow: xtls-rprx-vision, skip-cert-verify: true, reality-opts: {public-key: Y-5UnMs7GMdVUorVYASSExB1Ei41BYGZpjZBo2eAWQk, short-id: "11cfb5563fe3b863" }, servername: images.apple.com, client-fingerprint: random, network: tcp, udp: true}
+  - {name: 2406:da14:21b:7700:c3a3:43ce:d120:39f2:44331, server: [2406:da14:21b:7700:c3a3:43ce:d120:39f2], port: 44331, type: vless, uuid: 40f71432-109c-34fd-8979-91cf70d82973, tls: true, flow: xtls-rprx-vision, skip-cert-verify: true, reality-opts: {public-key: Y-5UnMs7GMdVUorVYASSExB1Ei41BYGZpjZBo2eAWQk, short-id: "11cfb5563fe3b863" }, servername: images.apple.com, client-fingerprint: random, network: tcp, udp: true}
   - {name: msrix:44331, server: 82.40.42.93, port: 44331, type: vless, uuid: af4c3a0f-f4e1-3987-883f-3e2646ca0fcd, tls: true, flow: xtls-rprx-vision, skip-cert-verify: true, reality-opts: {public-key: zUvhIMgbiego_aI7QUeHWw1887CpAXDEgpB18pnCBAA, short-id: "25a914cfdad7f2c3" }, servername: images.apple.com, client-fingerprint: random, network: tcp, udp: true}
 proxy-groups:
   - name: 🚀 节点选择
